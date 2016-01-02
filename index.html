@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+  <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+
+  <title>Test</title>
+
+  <style>
+    body { font-size: 11px; }
+    #map { height: 350px; }
+  </style>
+
+  <script>
+// check for Geolocation support
+if (navigator.geolocation) {
+  console.log('Geolocation is supported!');
+}
+else {
+  alert('Geolocation is not supported for this Browser/OS version yet.');
+}
+
+   </script>
+</head>
+
+<body>
+<div id="tripmeter">
+  <p>
+    <b>Current Location (lat, lon):</b><br/>
+    <span id="currentLat">???</span>&deg;, <span id="currentLon">???</span>&deg;<br />
+    Accuracy: <span id="currentAccuracy">???</span> m.
+  </p>
+  <p>
+    <b>Address:</b><br/>
+    <span id="currentAddr">???</p>
+  </p>
+  <p>
+    <b>Follow me:</b> <span id="currentFollow">yes</span>
+    ( <a href="javascript: followme(true);">yes</a> | 
+    <a href="javascript: followme(false);">no</a> )
+  </p>
+</div>
+<div id="map"></div>
+<div>
+  <p>Zoom <span id="currentZoom">???</span></p>
+</div>
+
+<script>
+
+function followme(status) {
+  if (status) { txt = "yes"; } else { txt = "no"; }
+  $("#currentFollow").html(txt);
+}
+
+// Start a map
+var map = L.map('map').setView([0, 0], 17);
+
+// var basemap = 'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
+var basemap = 'https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png';
+
+var layer = L.tileLayer(basemap, {
+  attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+});
+
+// Update zoom information
+map.on('zoomend', function() {
+    $("#currentZoom").html(map.getZoom());
+});
+
+// Add layer to the map
+map.addLayer(layer);
+
+// Add marker to the map
+var marker = L.marker([0, 0]).addTo(map);
+
+// Monitor current position
+navigator.geolocation.watchPosition(function(position) {
+
+  // Get coordinates data and map zoom
+  lat = position.coords.latitude;
+  lon = position.coords.longitude;
+  acc = position.coords.accuracy;
+  var zoom = $("#currentZoom").html();
+  var flagfollow = $("#currentFollow").html();
+
+  // Update coords informations
+  $("#currentLat").html(lat);
+  $("#currentLon").html(lon);
+  $("#currentAccuracy").html(acc);
+ 
+  // Update map and marker
+  if (flagfollow == "yes") {
+    map.panTo([lat, lon]);
+    marker.setLatLng([lat, lon]);
+  
+    // Reserve geocoding from OpenStreetMap API
+    urlapi = 'http://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&zoom=' + zoom + '&addressdetails=1';
+
+    $.getJSON(urlapi, function(data) {
+      $("#currentAddr").html(data.display_name);
+    });
+   
+  }
+});
+
+// Show current map zoom
+$("#currentZoom").html(map.getZoom());
+
+
+  </script>
+</body>
+
+</html>
